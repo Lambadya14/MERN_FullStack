@@ -1,0 +1,10 @@
+# Mengabaikan file .log
+*.log
+
+# Mengabaikan folder temp
+temp/
+
+# Mengabaikan file konfigurasi pribadi
+config.json
+
+.env
