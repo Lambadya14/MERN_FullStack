@@ -1,10 +1,5 @@
-# Mengabaikan file .log
-*.log
-
-# Mengabaikan folder temp
-temp/
-
-# Mengabaikan file konfigurasi pribadi
-config.json
-
+# Mengabaikan file .env
 .env
+
+# Mengabaikan folder node_modules
+node_modules/
