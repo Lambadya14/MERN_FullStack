@@ -1,0 +1,29 @@
+{
+  "name": "fullstack",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon backend/server.js"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "argon2": "^0.41.1",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.2",
+    "nodemailer": "^6.9.16",
+    "uuid": "^11.0.3",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "i": "^0.3.7",
+    "nodemon": "^3.1.7"
+  }
+}
