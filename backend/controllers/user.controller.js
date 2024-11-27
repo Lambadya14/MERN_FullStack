@@ -20,7 +20,7 @@ export const createUser = async (req, res) => {
   const { name, email, password, confPassword, role } = req.body;
 
   // Validasi Input
-  if (!name || !email || !password || !confPassword || !role) {
+  if (!name || !email || !password || !confPassword) {
     return res
       .status(400)
       .json({ success: false, message: "Please provide all required fields" });
@@ -256,7 +256,7 @@ const sendOtpEmail = async (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL,
     to: email,
-    subject: "Your OTP for Password Change",
+    subject: "Here is your OTP!",
     text: `Your OTP is: ${otp}`,
   };
 
@@ -271,6 +271,7 @@ const sendOtpEmail = async (email, otp) => {
 const generateOtp = () => {
   return Array.from({ length: 6 }, () => crypto.randomInt(0, 10)).join("");
 };
+
 // Fungsi untuk mengirim OTP dan menyimpannya di database
 export const sendOtpForPasswordChange = async (req, res) => {
   const { email, userId } = req.body;
@@ -298,5 +299,21 @@ export const sendOtpForPasswordChange = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ success: false, message: "Invalid User Id" });
+  }
+
+  try {
+    await User.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: "User has been deleted" });
+  } catch (error) {
+    console.error("Error in deleting products:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
