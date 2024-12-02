@@ -13,10 +13,8 @@ const Register = () => {
   const { createUser } = useUserRegisterStore();
   const handleAddUser = async (e) => {
     e.preventDefault();
-    console.log(newUser);
-    const { success, message } = await createUser(newUser);
-    console.log("Success:", success);
-    console.log("Message:", message);
+    await createUser(newUser);
+
     setNewUser({ name: "", email: "", password: "", confPassword: "" });
   };
   return (

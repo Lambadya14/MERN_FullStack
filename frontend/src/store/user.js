@@ -31,11 +31,10 @@ export const useAuthStore = create((set) => ({
   isAuthenticated: false,
   user: null,
   token: null,
+  isLoading: false,
 
-  // Fungsi login
   login: async (email, password) => {
     try {
-      // Simulasi panggilan API login
       const response = await fetch("/api/users/login", {
         method: "POST",
         headers: {
@@ -45,14 +44,11 @@ export const useAuthStore = create((set) => ({
       });
 
       const data = await response.json();
-      console.log(data.message);
 
-      // Menyimpan data pengguna dan token ke localStorage
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user", JSON.stringify(data.data));
       localStorage.setItem("token", data.token);
 
-      // Mengubah state jika login berhasil
       set({
         isAuthenticated: true,
         user: data.data,
@@ -64,14 +60,38 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  // Fungsi logout
+  fetchUserProfile: async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await fetch("/api/users/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch user profile");
+
+      const data = await response.json();
+
+      if (data?.success) {
+        set({ user: data.data });
+      } else {
+        set({ user: null });
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      set({ user: null });
+    }
+  },
+
   logout: () => {
-    // Menghapus data autentikasi dari localStorage
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
 
-    // Mengubah state ke nilai awal
     set({
       isAuthenticated: false,
       user: null,
@@ -79,7 +99,6 @@ export const useAuthStore = create((set) => ({
     });
   },
 
-  // Memuat data dari localStorage saat aplikasi dimuat ulang
   loadFromLocalStorage: () => {
     const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
     const user = JSON.parse(localStorage.getItem("user"));
@@ -91,6 +110,8 @@ export const useAuthStore = create((set) => ({
         user: user,
         token: token,
       });
+    } else {
+      console.log("No valid data in localStorage");
     }
   },
 }));

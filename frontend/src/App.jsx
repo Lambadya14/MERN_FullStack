@@ -4,8 +4,11 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
+import ProtectedRoute from "./middleware/ProtectedRoute";
+import ProfilePage from "./pages/ProfilePage";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/user";
+import PublicRoute from "./middleware/PublicRoute";
 
 function App() {
   const location = useLocation();
@@ -13,11 +16,10 @@ function App() {
     (state) => state.loadFromLocalStorage
   );
 
-  // Muat data dari localStorage saat aplikasi dimulai
   useEffect(() => {
+    // Panggil fungsi untuk memuat data dari localStorage saat aplikasi pertama kali dimuat
     loadFromLocalStorage();
-  }, [loadFromLocalStorage]);
-
+  }, []);
   return (
     <>
       {/* Hanya render Navbar jika bukan di halaman Register */}
@@ -26,9 +28,39 @@ function App() {
       )}
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/create" element={<CreatePage />} />
+
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/create"
+          element={
+            <ProtectedRoute>
+              <CreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/me"
+          element={
+            // <ProtectedRoute>
+            <ProfilePage />
+            // </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

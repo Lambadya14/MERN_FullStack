@@ -16,6 +16,41 @@ export const getUser = async (req, res) => {
   }
 };
 
+export const getUserProfile = async (req, res) => {
+  const token = req.headers["authorization"]?.split(" ")[1]; // Ambil token dari header
+  console.log("Received token:", token);
+
+  if (!token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded token:", decoded);
+
+    const user = await User.findById(decoded.userId);
+
+    console.log("User found:", user);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const { password, ...userData } = user.toObject();
+    res.status(200).json({
+      success: true,
+      data: userData,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(403).json({ success: false, message: "Invalid token" });
+  }
+};
+
 export const createUser = async (req, res) => {
   const { name, email, password, confPassword, role } = req.body;
 

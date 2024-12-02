@@ -73,14 +73,17 @@ export default function Example() {
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {isAuthenticated ? (
-              <button
-                type="button"
-                className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-              >
-                <span className="absolute -inset-1.5" />
-                <span className="sr-only">View notifications</span>
-                <BellIcon aria-hidden="true" className="size-6" />
-              </button>
+              <>
+                <p className=" text-gray-400">{user.name}</p>
+                <button
+                  type="button"
+                  className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                >
+                  <span className="absolute -inset-1.5" />
+                  <span className="sr-only">View notifications</span>
+                  <BellIcon aria-hidden="true" className="size-6" />
+                </button>
+              </>
             ) : (
               ""
             )}
@@ -104,33 +107,25 @@ export default function Example() {
                     <>
                       {" "}
                       <MenuItems
+                        as="div"
                         transition
                         className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                       >
-                        <MenuItem>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                          >
-                            {user.name}
-                          </a>
-                        </MenuItem>
-                        <MenuItem>
-                          <a
-                            href="#"
+                        <MenuItem as="div">
+                          <Link
+                            to={"/me"}
                             className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                           >
                             Settings
-                          </a>
+                          </Link>
                         </MenuItem>
-                        <MenuItem>
-                          <a
-                            href="#"
+                        <MenuItem as="div">
+                          <Link
                             className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                             onClick={handleLogout}
                           >
                             Sign out
-                          </a>
+                          </Link>
                         </MenuItem>
                       </MenuItems>
                     </>
@@ -140,7 +135,7 @@ export default function Example() {
                 </>
               ) : (
                 <>
-                  <div>
+                  <div className="hidden sm:ml-6 sm:block">
                     <Link
                       className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
                       to={"/login"}
@@ -179,6 +174,21 @@ export default function Example() {
               {item.name}
             </DisclosureButton>
           ))}
+        </div>{" "}
+        <hr className="border-t-2 border-gray-500 w-full  mx-auto my-4" />
+        <div className="space-y-1 px-2 pb-3">
+          <Link
+            to="/login"
+            className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+          >
+            Login
+          </Link>
+          <Link
+            to="/create"
+            className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+          >
+            Register
+          </Link>
         </div>
       </DisclosurePanel>
     </Disclosure>
