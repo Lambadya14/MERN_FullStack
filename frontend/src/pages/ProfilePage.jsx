@@ -1,6 +1,63 @@
+import { useEffect, useState } from "react";
 import FotoProfil from "../assets/Me.jpg";
+import { useAuthStore } from "../store/user";
 
 const ProfilePage = () => {
+  const user = useAuthStore((state) => state.user); // Ambil user
+  const fetchUserProfile = useAuthStore((state) => state.fetchUserProfile); // Ambil fungsi fetch
+  const changeName = useAuthStore((state) => state.changeName); // Ambil fungsi changeName
+  const isLoading = useAuthStore((state) => state.isLoading); // Ambil loading status
+
+  // State untuk input nama lokal
+  const [newName, setNewName] = useState(user?.name || "");
+  const [isNameChanged, setIsNameChanged] = useState(false);
+
+  // Fetch user profile saat komponen di-render
+  useEffect(() => {
+    if (!user && !isLoading) {
+      fetchUserProfile(); // Fetch user jika belum ada dan tidak loading
+    }
+  }, [fetchUserProfile, user, isLoading]);
+
+  useEffect(() => {
+    setNewName(user?.name || "");
+  }, [user]);
+
+  const handleNameChange = (e) => {
+    setNewName(e.target.value);
+    setIsNameChanged(e.target.value !== user?.name); // Periksa apakah nama berubah
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Pastikan user dan user._id ada
+    if (!user || !user._id) {
+      console.error("User ID is missing");
+      alert("User ID is missing. Please log in again.");
+      return; // Keluar dari fungsi jika ID tidak valid
+    }
+
+    if (isNameChanged) {
+      try {
+        // Panggil fungsi changeName dengan id
+        await changeName(user._id, newName, user.email);
+        setIsNameChanged(false); // Reset state setelah perubahan
+      } catch (error) {
+        console.error("Error during name change:", error);
+        alert("Error while changing name. Please try again.");
+      }
+    }
+  };
+
+  if (isLoading) {
+    return <p>Loading user profile...</p>;
+  }
+
+  if (!user) {
+    return <p>No user profile found.</p>;
+  }
+
   return (
     <div className="container mx-auto flex flex-col md:flex-row flex-wrap justify-center items-center pt-[100px]">
       <div>
@@ -10,15 +67,19 @@ const ProfilePage = () => {
           className="w-[350px] h-[350px] object-cover rounded-[500px]"
         />
       </div>
-      <form className="flex flex-col justify-center items-center w-full max-w-md px-4 sm:px-6 lg:w-1/2 mb-6 lg:mb-0">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col justify-center items-center w-full max-w-md px-4 sm:px-6 lg:w-1/2 mb-6 lg:mb-0"
+      >
         <div className="mt-6 w-full">
           {/* Nama Input */}
           <div className="relative mb-8">
             <input
-              type="Nama"
+              type="text"
               id="Nama"
               className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
-              placeholder="Nama"
+              value={newName}
+              onChange={handleNameChange}
             />
             <label
               htmlFor="Nama"
@@ -28,13 +89,14 @@ const ProfilePage = () => {
             </label>
           </div>
 
-          {/* Password Input */}
+          {/* Email Input */}
           <div className="relative mb-8">
             <input
-              type="Email"
+              type="email"
               id="Email"
               className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
-              placeholder="Email"
+              value={user?.email}
+              disabled
             />
             <label
               htmlFor="Email"
@@ -43,31 +105,17 @@ const ProfilePage = () => {
               Email
             </label>
           </div>
-
-          {/* Client Input */}
-          <div className="relative mb-8">
-            <input
-              type="text"
-              id="Client"
-              className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
-              placeholder="Client"
-            />
-            <label
-              htmlFor="Client"
-              className="absolute left-0 text-gray-500 peer-placeholder-shown:top-1 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all duration-200 -top-5 text-sm"
-            >
-              Client
-            </label>
-          </div>
         </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="bg-blue-500 hover:bg-blue-600 focus:bg-blue-700 active:bg-blue-800 text-white font-semibold px-6 py-3 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 ease-in-out mt-4 w-full max-w-sm "
-        >
-          Login
-        </button>
+        {/* Tampilkan tombol hanya jika nama berubah */}
+        {isNameChanged && (
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 focus:bg-blue-700 active:bg-blue-800 text-white font-semibold px-6 py-3 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 ease-in-out mt-4 w-full max-w-sm"
+          >
+            Ubah Nama
+          </button>
+        )}
       </form>
     </div>
   );
