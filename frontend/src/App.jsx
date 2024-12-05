@@ -9,6 +9,8 @@ import ProfilePage from "./pages/ProfilePage";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/user";
 import PublicRoute from "./middleware/PublicRoute";
+import OtpPage from "./pages/OtpPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 function App() {
   const location = useLocation();
@@ -20,14 +22,22 @@ function App() {
     // Panggil fungsi untuk memuat data dari localStorage saat aplikasi pertama kali dimuat
     loadFromLocalStorage();
   }, []);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth(); // Sinkronisasi token saat pertama kali load
+  }, []);
+
   return (
     <>
       {/* Hanya render Navbar jika bukan di halaman Register */}
-      {location.pathname !== "/register" && location.pathname !== "/login" && (
-        <Navbar />
-      )}
+      {location.pathname !== "/register" &&
+        location.pathname !== "/login" &&
+        location.pathname !== "/reset" &&
+        location.pathname !== "/otp" && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/reset" element={<ChangePasswordPage />} />
 
         <Route
           path="/login"
@@ -58,6 +68,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/otp"
+          element={
+            <ProtectedRoute>
+              <OtpPage />
             </ProtectedRoute>
           }
         />

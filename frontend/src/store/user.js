@@ -1,8 +1,22 @@
 import { create } from "zustand";
 
-export const useUserRegisterStore = create((set) => ({
+export const useAuthStore = create((set) => ({
+  isAuthenticated: false,
   user: [],
+  token: null,
+  isLoading: false,
+  isInitialized: false, // Flag untuk inisialisasi
   setUser: (user) => set({ user }),
+
+  // Inisialisasi Auth dari LocalStorage
+  initializeAuth: () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      set({ isAuthenticated: true, isInitialized: true });
+    } else {
+      set({ isAuthenticated: false, isInitialized: true });
+    }
+  },
   createUser: async (newUser) => {
     if (
       !newUser.name ||
@@ -12,26 +26,44 @@ export const useUserRegisterStore = create((set) => ({
     ) {
       return { success: false, message: "Please fill in all fields" };
     }
-    const res = await fetch("/api/users/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newUser),
-    });
-    const data = await res.json();
-    set((state) => ({
-      user: [...state.user, data.data],
-    }));
-    return { success: true, message: "User created successfully" };
-  },
-}));
 
-export const useAuthStore = create((set) => ({
-  isAuthenticated: false,
-  user: null,
-  token: null,
-  isLoading: false,
+    try {
+      const res = await fetch("/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+
+      // Cek jika fetch berhasil dengan res.ok
+      if (!res.ok) {
+        const errorData = await res.json();
+        return {
+          success: false,
+          message: errorData.message || "Failed to register user",
+        };
+      }
+
+      const data = await res.json();
+
+      // Tambahkan data user ke state
+      set((state) => ({
+        user: [...state.user, data.data],
+      }));
+
+      return {
+        success: true,
+        message: data.message || "User created successfully",
+      };
+    } catch (error) {
+      console.error("Error saat register:", error.message || error);
+      return {
+        success: false,
+        message: error.message || "An error occurred during registration",
+      };
+    }
+  },
 
   login: async (email, password) => {
     try {
@@ -44,11 +76,15 @@ export const useAuthStore = create((set) => ({
       });
 
       const data = await response.json();
+      console.log(data);
 
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user", JSON.stringify(data.data));
-      localStorage.setItem("token", data.token);
-
+      if (data.success === true) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("token", data.token);
+      } else {
+        console.log();
+      }
       set({
         isAuthenticated: true,
         user: data.data,
@@ -169,6 +205,88 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user", JSON.stringify(data.data));
       localStorage.setItem("token", data.token);
+
+      // Update state with the new user data and token
+      set({
+        isAuthenticated: true,
+        user: data.data,
+        token: data.token,
+      });
+    } catch (error) {
+      console.error("Error changing name:", error.message || error);
+      alert(`Error changing name: ${error.message}`);
+    }
+  },
+  requestOTP: async (userId, email) => {
+    console.log(email, userId);
+    try {
+      const response = await fetch(`/api/users/request-otp/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, email }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error:", errorDetails);
+        throw new Error(`Failed!. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error("Error:", error.message || error);
+    }
+  },
+  verifyOTP: async (userId, otp) => {
+    try {
+      const response = await fetch(`/api/users/verify-otp/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ otp }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error:", errorDetails.message);
+        throw new Error(`Failed!. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error("Error:", error.message || error);
+    }
+  },
+  changePassword: async (newPassword, email, id) => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`/api/users/edit/password/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword, email }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error:", errorDetails);
+        throw new Error(`Failed. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
 
       // Update state with the new user data and token
       set({

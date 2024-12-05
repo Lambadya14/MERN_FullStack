@@ -5,9 +5,10 @@ import {
   getUser,
   getUserProfile,
   loginUser,
-  sendOtpForPasswordChange,
+  requestOTP,
   updateUsername,
   updateUserPassword,
+  verifyOTP,
   //   deleteProduct,
 } from "../controllers/user.controller.js";
 import timeLimitation from "../middleware/timeLimitation.js";
@@ -21,7 +22,10 @@ router.post("/register", createUser);
 router.post("/login", loginUser);
 router.put("/edit/username/:id", updateUsername);
 router.put("/edit/password/:id", updateUserPassword);
-router.put("/verifyotp/:id", timeLimitation, sendOtpForPasswordChange);
+// router.post("/request-otp/:id", timeLimitation, requestOTP);
+// router.post("/verify-otp/:id", timeLimitation, verifyOTP);
+router.post("/request-otp/:id", requestOTP);
+router.post("/verify-otp/:id", verifyOTP);
 router.delete("/:id", deleteUser);
 
 export default router;

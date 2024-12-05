@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import FotoProfil from "../assets/Me.jpg";
 import { useAuthStore } from "../store/user";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const user = useAuthStore((state) => state.user); // Ambil user
   const fetchUserProfile = useAuthStore((state) => state.fetchUserProfile); // Ambil fungsi fetch
   const changeName = useAuthStore((state) => state.changeName); // Ambil fungsi changeName
   const isLoading = useAuthStore((state) => state.isLoading); // Ambil loading status
+  const requestOTP = useAuthStore((state) => state.requestOTP);
+
+  const navigate = useNavigate();
 
   // State untuk input nama lokal
   const [newName, setNewName] = useState(user?.name || "");
@@ -32,7 +36,7 @@ const ProfilePage = () => {
     e.preventDefault();
 
     // Pastikan user dan user._id ada
-    if (!user || !user._id) {
+    if (!user || !user.userId) {
       console.error("User ID is missing");
       alert("User ID is missing. Please log in again.");
       return; // Keluar dari fungsi jika ID tidak valid
@@ -41,12 +45,22 @@ const ProfilePage = () => {
     if (isNameChanged) {
       try {
         // Panggil fungsi changeName dengan id
-        await changeName(user._id, newName, user.email);
+        await changeName(user.userId, newName, user.email);
         setIsNameChanged(false); // Reset state setelah perubahan
       } catch (error) {
         console.error("Error during name change:", error);
         alert("Error while changing name. Please try again.");
       }
+    }
+  };
+  const handleRequestOTP = async () => {
+    const result = await requestOTP(
+      "67469966ef0551243ae825bb",
+      "arieeeee511@gmail.com"
+    );
+    console.log(result);
+    if (result) {
+      navigate("/otp");
     }
   };
 
@@ -116,6 +130,7 @@ const ProfilePage = () => {
             Ubah Nama
           </button>
         )}
+        <button onClick={handleRequestOTP}> Ubah Password</button>
       </form>
     </div>
   );

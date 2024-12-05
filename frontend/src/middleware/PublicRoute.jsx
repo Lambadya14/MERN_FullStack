@@ -4,17 +4,19 @@ import { useAuthStore } from "../store/user";
 
 const PublicRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  console.log("Is Authenticated:", isAuthenticated); // Menambahkan log
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+
+  if (!isInitialized) {
+    return <p>Loading...</p>; // Tampilkan loading jika belum selesai inisialisasi
+  }
 
   if (isAuthenticated) {
-    // Pastikan untuk tidak terus-menerus memicu perubahan
     return <Navigate to="/" />;
   }
 
   return children;
 };
 
-// Validasi props
 PublicRoute.propTypes = {
   children: PropTypes.node.isRequired,
 };

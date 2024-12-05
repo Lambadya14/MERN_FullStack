@@ -1,16 +1,24 @@
-import PropTypes from "prop-types"; // Tambahkan ini
+import PropTypes from "prop-types";
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/user";
 
-const ProtectedRoute = ({ children }) => {
+const PrivateRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  if (!isInitialized) {
+    return <p>Loading...</p>; // Loading jika belum selesai inisialisasi
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
 };
 
-// Validasi props
-ProtectedRoute.propTypes = {
-  children: PropTypes.node.isRequired, // Validasi children sebagai node dan wajib
+PrivateRoute.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
-export default ProtectedRoute;
+export default PrivateRoute;

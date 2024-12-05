@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CreateAccount from "../assets/Create.svg";
-import { useUserRegisterStore } from "../store/user";
+import { useAuthStore } from "../store/user";
 import { useState } from "react";
 
 const Register = () => {
@@ -10,12 +10,17 @@ const Register = () => {
     password: "",
     confPassword: "",
   });
-  const { createUser } = useUserRegisterStore();
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const { createUser } = useAuthStore();
   const handleAddUser = async (e) => {
     e.preventDefault();
-    await createUser(newUser);
-
+    const result = await createUser(newUser);
+    console.log(result.message);
     setNewUser({ name: "", email: "", password: "", confPassword: "" });
+    if (result.success === true) {
+      navigate("/login");
+    }
   };
   return (
     <div className="flex flex-wrap justify-center items-center h-screen px-4">
@@ -39,7 +44,6 @@ const Register = () => {
               Nama
             </label>
           </div>
-
           <div className="relative mb-6">
             <input
               type="email"
@@ -58,10 +62,9 @@ const Register = () => {
               Email
             </label>
           </div>
-
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
               className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
               placeholder="Password"
@@ -77,10 +80,9 @@ const Register = () => {
               Password
             </label>
           </div>
-
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="confirm-password"
               className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
               placeholder="Confirm Password"
@@ -94,6 +96,18 @@ const Register = () => {
               className="absolute left-0 text-gray-500 peer-placeholder-shown:top-1 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all duration-200 -top-5 text-sm"
             >
               Confirm Password
+            </label>
+          </div>{" "}
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="showPassword"
+              className="mr-2"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)} // Toggle state
+            />
+            <label htmlFor="showPassword" className="text-gray-600">
+              Tampilkan Password
             </label>
           </div>
         </div>

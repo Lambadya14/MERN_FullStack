@@ -208,34 +208,37 @@ export const updateUsername = async (req, res) => {
 };
 
 export const updateUserPassword = async (req, res) => {
-  const { id } = req.params;
-  const { password, otp } = req.body; // Ambil password dan OTP dari body request
+  const { password } = req.body; // Ambil password dari body request
 
-  // Validasi apakah id pengguna valid
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid User Id!" });
+  const token = req.headers["authorization"]?.split(" ")[1]; // Ambil token dari header
+
+  // Validasi input token
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Authorization token is required",
+    });
   }
 
-  // Verifikasi OTP
-  const otpRecord = await Otp.findOne({ userId: id, otp: otp });
-
-  if (!otpRecord) {
-    return res.status(400).json({ success: false, message: "Invalid OTP!" });
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
   }
 
-  // Cek apakah OTP sudah kedaluwarsa
-  if (otpRecord.expiresAt < Date.now()) {
-    // Hapus OTP yang kedaluwarsa dari database
-    await Otp.deleteOne({ _id: otpRecord._id });
-    return res
-      .status(400)
-      .json({ success: false, message: "OTP has expired!" });
-  }
+  const userId = decoded.userId;
 
-  // Hapus OTP setelah diverifikasi untuk mencegah penggunaan ulang
-  await Otp.deleteOne({ _id: otpRecord._id });
+  // Validasi apakah userId adalah ObjectId yang valid
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid User ID!",
+    });
+  }
 
   // Validasi input password
   const passwordRegex =
@@ -245,7 +248,7 @@ export const updateUserPassword = async (req, res) => {
     return res.status(400).json({
       success: false,
       message:
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and optional special character!",
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and an optional special character!",
     });
   }
 
@@ -253,18 +256,18 @@ export const updateUserPassword = async (req, res) => {
     // Hash password menggunakan Argon2
     const hashedPassword = await argon2.hash(password);
 
-    // Cari dan update data pengguna
+    // Update password pengguna
     const updateUser = await User.findByIdAndUpdate(
-      id,
+      userId,
       { password: hashedPassword },
-      { new: true } // Mengembalikan data yang telah diperbarui
+      { new: true }
     );
 
-    // Jika pengguna tidak ditemukan setelah update
     if (!updateUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     res.status(200).json({
@@ -272,9 +275,18 @@ export const updateUserPassword = async (req, res) => {
       data: updateUser,
       message: "Password updated successfully",
     });
+
+    // Hapus OTP terkait jika ada
+    const otpRecord = await Otp.findOne({ userId });
+    if (otpRecord) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+    }
   } catch (error) {
-    console.error("Error in updateUserPassword:", error.message);
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Error in updateUserPassword:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
@@ -308,32 +320,101 @@ const generateOtp = () => {
 };
 
 // Fungsi untuk mengirim OTP dan menyimpannya di database
-export const sendOtpForPasswordChange = async (req, res) => {
+export const requestOTP = async (req, res) => {
   const { email, userId } = req.body;
 
-  // Cek apakah email valid dan pengguna ada
-  const user = await User.findById(userId);
-  if (!user || user.email !== email) {
-    return res.status(400).json({ success: false, message: "User not found" });
+  if (!email || !userId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
   }
 
-  const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP kedaluwarsa setelah 10 menit
-
   try {
-    // Simpan OTP ke database
+    // Cek apakah user ada dan email sesuai
+    const user = await User.findById(userId);
+    if (!user || user.email !== email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email or user ID" });
+    }
+
+    // Hapus OTP lama jika ada
+    await Otp.deleteMany({ userId });
+
+    // Generate OTP baru
+    const otp = generateOtp(); // Pastikan generateOtp() menghasilkan OTP acak
+    const hashedOtp = await argon2.hash(otp); // Hash OTP menggunakan Argon2
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
+
+    // Simpan hash OTP ke database
     await Otp.create({
-      userId: userId,
-      otp: otp,
+      userId,
+      otp: hashedOtp,
       expiresAt: expiresAt,
     });
 
     // Kirim OTP ke email pengguna
     await sendOtpEmail(email, otp);
+
     res.status(200).json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Error in requestOTP:", error);
     res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+export const verifyOTP = async (req, res) => {
+  const { otp, userId } = req.body;
+
+  if (!otp) {
+    return res.status(400).json({ success: false, message: "Missing OTP " });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid User ID!" });
+  }
+
+  try {
+    // Cari OTP di database
+    const otpRecord = await Otp.findOne({ userId });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: "Invalid OTP!" });
+    }
+
+    // Cek apakah OTP sudah kedaluwarsa
+    if (otpRecord.expiresAt < Date.now()) {
+      await Otp.deleteOne({ _id: otpRecord._id }); // Hapus OTP yang kedaluwarsa
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP has expired!" });
+    }
+
+    // Verifikasi OTP yang dimasukkan pengguna dengan hash OTP yang disimpan
+    const isValid = await argon2.verify(otpRecord.otp, otp);
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Invalid OTP!" });
+    }
+
+    // Hapus OTP setelah berhasil diverifikasi (opsional untuk OTP sekali pakai)
+    await Otp.deleteOne({ _id: otpRecord._id });
+
+    const generateToken = (userId) => {
+      // Buat token JWT yang berisi userId dan masa berlaku token (misalnya 1 jam)
+      const token = jwt.sign({ userId: userId }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      return token;
+    };
+    // OTP valid, buat token atau sesi
+    const token = generateToken(userId); // Buat token/sesi (gunakan JWT atau sesi)
+    res
+      .status(200)
+      .json({ success: true, message: "OTP verified", token: token });
+  } catch (error) {
+    console.error("Error in verifyOTP:", error.message);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 

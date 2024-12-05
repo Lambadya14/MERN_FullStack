@@ -9,6 +9,7 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   // Menggunakan fungsi login dari useAuthStore
   const login = useAuthStore((state) => state.login);
@@ -17,10 +18,14 @@ const Login = () => {
     console.log("Login User:", loginUser);
     // Panggil fungsi login dengan email dan password
     const { email, password } = loginUser;
-    await login(email, password); // Menggunakan fungsi login dari store
+    const result = await login(email, password); // Menggunakan fungsi login dari store
     // Reset form setelah login
-    setLoginUser({ email: "", password: "" });
-    navigate("/");
+    console.log(result);
+    if (result.success) {
+      // Jika login berhasil, reset form dan navigasi ke halaman utama
+      setLoginUser({ email: "", password: "" });
+      navigate("/");
+    }
   };
   return (
     <div className="flex flex-wrap justify-center items-center h-screen px-4">
@@ -50,10 +55,9 @@ const Login = () => {
               Email
             </label>
           </div>
-
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
               className="peer w-full border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent text-gray-900 placeholder-transparent"
               placeholder="Password"
@@ -67,6 +71,18 @@ const Login = () => {
               className="absolute left-0 text-gray-500 peer-placeholder-shown:top-1 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all duration-200 -top-5 text-sm"
             >
               Password
+            </label>
+          </div>{" "}
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="showPassword"
+              className="mr-2"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)} // Toggle state
+            />
+            <label htmlFor="showPassword" className="text-gray-600">
+              Tampilkan Password
             </label>
           </div>
         </div>
