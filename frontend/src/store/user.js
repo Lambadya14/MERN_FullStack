@@ -67,6 +67,7 @@ export const useAuthStore = create((set) => ({
   },
 
   login: async (email, password) => {
+    set({ isLoading: true, message: "" });
     try {
       const response = await fetch("/api/users/login", {
         method: "POST",
@@ -76,24 +77,34 @@ export const useAuthStore = create((set) => ({
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-      console.log(data);
-
-      if (data.success === true) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("user", JSON.stringify(data.data));
-        localStorage.setItem("token", data.token);
-      } else {
-        console.log();
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error("Error:", errorDetails);
+        console.error(`Failed to login. Status: ${response.status}`);
       }
-      set({
-        isAuthenticated: true,
-        user: data.data,
-        token: data.token,
-      });
+
+      const data = await response.json();
+
+      // Validate data before saving to localStorage
+      if (data && data.token && data.user) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+
+        set({
+          isAuthenticated: true,
+          user: data.user,
+          token: data.token,
+        });
+      } else {
+        throw new Error("Invalid login response data");
+      }
     } catch (error) {
-      console.error("Error saat login:", error.message || error);
-      alert(`Error saat login: ${error.message}`);
+      console.error("Error logging in:", error.message || error);
+      set({ message: error.message || "Failed to login" });
+      alert(`Error logging in: ${error.message}`);
+    } finally {
+      set({ isLoading: false });
     }
   },
 
@@ -299,6 +310,41 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       console.error("Error changing Password:", error.message || error);
       alert(`Error changing Password: ${error.message}`);
+    }
+  },
+  resetPassword: async (token, email, newPassword) => {
+    set({ isLoading: true, message: "" });
+    try {
+      const response = await fetch("/api/users/verify-reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, email, newPassword }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error:", errorDetails);
+        set({ message: errorDetails });
+        return false;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        set({ message: "Password updated successfully" });
+        return true;
+      } else {
+        set({ message: data.message });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      set({ message: "Failed to reset password" });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import Otp from "../models/otp.model.js";
+import resetOTP from "../models/resetPassword.model.js";
 
 export const getUser = async (req, res) => {
   try {
@@ -430,5 +431,134 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     console.error("Error in deleting products:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const requestResetOTP = async (req, res) => {
+  const { email } = req.body;
+
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid email address",
+    });
+  }
+
+  try {
+    // Cari user berdasarkan email
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Jangan ungkap apakah email ada atau tidak
+      return res.status(200).send("Tautan Reset Password terkirim");
+    }
+
+    // Buat token reset password
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiry = Date.now() + 3600000; // Token berlaku selama 1 jam
+    await resetOTP.create({ email, token, expiry });
+
+    // Simulasi kirim email (console log)
+    await sendLinkEmail(email, token);
+
+    res
+      .status(200)
+      .send({ success: true, message: "Tautan Reset Password terkirim" });
+  } catch (error) {
+    console.error("Error in requestOTP:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+export const verifyResetOTP = async (req, res) => {
+  const { token, email, newPassword } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ success: false, message: "Missing token" });
+  }
+
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid email address",
+    });
+  }
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!newPassword || !passwordRegex.test(newPassword)) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number!",
+    });
+  }
+
+  try {
+    // Cari token reset password di database
+    const resetRecord = await resetOTP.findOne({ email, token });
+    if (!resetRecord) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid token!" });
+    }
+
+    // Cek apakah token sudah kedaluwarsa
+    if (resetRecord.expiry < Date.now()) {
+      await resetOTP.deleteOne({ _id: resetRecord._id }); // Hapus token yang kedaluwarsa
+      return res
+        .status(400)
+        .json({ success: false, message: "Token has expired!" });
+    }
+
+    // Hash password baru menggunakan Argon2
+    const hashedPassword = await argon2.hash(newPassword);
+
+    // Update password pengguna
+    const updateUser = await User.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    if (!updateUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Hapus token setelah berhasil diverifikasi
+    await resetOTP.deleteOne({ _id: resetRecord._id });
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in verifyResetOTP:", error.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+const sendLinkEmail = async (email, token) => {
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.EMAIL_PASSWORD, // Gantilah dengan password email Anda atau gunakan OAuth
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Link Tautan Forget Password",
+    text: `Silahkan klik link ini: http://localhost:5173/forget?token=${token}&email=${email}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    throw new Error("Failed to send OTP email");
   }
 };

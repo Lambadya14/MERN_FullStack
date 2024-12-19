@@ -11,6 +11,8 @@ import { useAuthStore } from "./store/user";
 import PublicRoute from "./middleware/PublicRoute";
 import OtpPage from "./pages/OtpPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import RequestResetPasswordPage from "./pages/RequestResetPasswordPage";
 
 function App() {
   const location = useLocation();
@@ -34,11 +36,18 @@ function App() {
       {location.pathname !== "/register" &&
         location.pathname !== "/login" &&
         location.pathname !== "/reset" &&
+        location.pathname !== "/forget" &&
+        location.pathname !== "/request-reset-password" &&
         location.pathname !== "/otp" && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/reset" element={<ChangePasswordPage />} />
-
+        <Route path="/forget" element={<ResetPasswordPage />} />
+        <Route
+          path="/request-reset-password"
+          element={<RequestResetPasswordPage />}
+        />{" "}
+        {/* Tambahkan rute untuk halaman RequestResetPassword */}
         <Route
           path="/login"
           element={

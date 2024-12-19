@@ -71,6 +71,9 @@ const Login = () => {
             >
               Password
             </label>
+            <Link to={"/request-reset-password"}>
+              <p className="text-right text-gray-600">Forget Password?</p>
+            </Link>
           </div>{" "}
           <div className="flex items-center mt-2">
             <input
