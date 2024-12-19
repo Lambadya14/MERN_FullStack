@@ -5,6 +5,7 @@ export const useAuthStore = create((set) => ({
   user: [],
   token: null,
   isLoading: false,
+  setIsLoading: (value) => set({ isLoading: value }),
   isInitialized: false, // Flag untuk inisialisasi
   setUser: (user) => set({ user }),
 
