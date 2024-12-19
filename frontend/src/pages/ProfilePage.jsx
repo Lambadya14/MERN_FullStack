@@ -10,6 +10,8 @@ const ProfilePage = () => {
   const isLoading = useAuthStore((state) => state.isLoading); // Ambil loading status
   const requestOTP = useAuthStore((state) => state.requestOTP);
 
+  console.log(user);
+
   const navigate = useNavigate();
 
   // State untuk input nama lokal
@@ -36,7 +38,7 @@ const ProfilePage = () => {
     e.preventDefault();
 
     // Pastikan user dan user._id ada
-    if (!user || !user.userId) {
+    if (!user._id) {
       console.error("User ID is missing");
       alert("User ID is missing. Please log in again.");
       return; // Keluar dari fungsi jika ID tidak valid
@@ -45,7 +47,7 @@ const ProfilePage = () => {
     if (isNameChanged) {
       try {
         // Panggil fungsi changeName dengan id
-        await changeName(user.userId, newName, user.email);
+        await changeName(user._id, newName, user.email);
         setIsNameChanged(false); // Reset state setelah perubahan
       } catch (error) {
         console.error("Error during name change:", error);
@@ -54,10 +56,7 @@ const ProfilePage = () => {
     }
   };
   const handleRequestOTP = async () => {
-    const result = await requestOTP(
-      "67469966ef0551243ae825bb",
-      "arieeeee511@gmail.com"
-    );
+    const result = await requestOTP(user._id, user.email);
     console.log(result);
     if (result) {
       navigate("/otp");

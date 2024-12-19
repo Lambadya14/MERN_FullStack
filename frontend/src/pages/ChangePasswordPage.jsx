@@ -9,6 +9,7 @@ const ChangePasswordPage = () => {
   const user = useAuthStore((state) => state.user); // Ambil user
   const changePassword = useAuthStore((state) => state.changePassword);
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,13 +17,14 @@ const ChangePasswordPage = () => {
       alert("Password baru dan konfirmasi password tidak cocok!");
       return;
     }
-    const result = await changePassword(newPassword, user.email, user.userId);
+    const result = await changePassword(newPassword, user.email, user._id);
+    console.log(result);
     if (result) {
       navigate("/");
     }
-    console.log("Password berhasil diubah");
-    // Lakukan logika pengubahan password di sini
   };
+
+  console.log(newPassword);
 
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen bg-gray-50">
@@ -44,7 +46,7 @@ const ChangePasswordPage = () => {
           <div>
             <label className="block text-gray-600">Password Baru</label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -56,12 +58,24 @@ const ChangePasswordPage = () => {
               Konfirmasi Password Baru
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Konfirmasi password baru"
             />
+          </div>
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="showPassword"
+              className="mr-2"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)} // Toggle state
+            />
+            <label htmlFor="showPassword" className="text-gray-600">
+              Tampilkan Password
+            </label>
           </div>
           <button
             type="submit"

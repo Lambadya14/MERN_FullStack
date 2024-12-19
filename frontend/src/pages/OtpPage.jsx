@@ -21,18 +21,24 @@ const OtpPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("OTP Submitted:", otp.join(""));
-    // Lakukan logika pengiriman OTP di sini
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && otp[index] === "") {
+      if (index > 0) {
+        document.getElementById(`otp-${index - 1}`).focus();
+      }
+    }
   };
 
   const handleRequestOTP = async () => {
-    await requestOTP(user.userId, user.email);
+    await requestOTP(user._id, user.email);
   };
 
-  const handleVerifyOTP = async () => {
-    const result = await verifyOTP(user.userId, otp);
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+
+    const otpCode = otp.join("");
+    console.log(otpCode);
+    const result = await verifyOTP(user._id, otpCode);
     console.log(result);
     if (result) {
       navigate("/reset");
@@ -51,7 +57,7 @@ const OtpPage = () => {
             Kode OTP telah dikirim ke email Anda
           </p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleVerifyOTP} className="space-y-6">
           <div className="flex justify-center space-x-2">
             {otp.map((digit, index) => (
               <input
@@ -60,6 +66,7 @@ const OtpPage = () => {
                 type="text"
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, index)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
                 className="w-12 h-12 border border-gray-300 rounded text-center text-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 maxLength={1}
                 pattern="[0-9]*"

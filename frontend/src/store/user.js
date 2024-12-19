@@ -181,10 +181,10 @@ export const useAuthStore = create((set) => ({
       console.log("No valid data in localStorage");
     }
   },
-  changeName: async (id, name, email) => {
+  changeName: async (userId, name, email) => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`/api/users/edit/username/${id}`, {
+      const response = await fetch(`/api/users/edit/username/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -249,7 +249,7 @@ export const useAuthStore = create((set) => ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ otp }),
+        body: JSON.stringify({ userId, otp }),
       });
 
       if (!response.ok) {
@@ -266,16 +266,16 @@ export const useAuthStore = create((set) => ({
       console.error("Error:", error.message || error);
     }
   },
-  changePassword: async (newPassword, email, id) => {
+  changePassword: async (newPassword, email, _id) => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`/api/users/edit/password/${id}`, {
+      const response = await fetch(`/api/users/edit/password/${_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ newPassword, email }),
+        body: JSON.stringify({ password: newPassword, email }),
       });
 
       if (!response.ok) {
@@ -294,9 +294,10 @@ export const useAuthStore = create((set) => ({
         user: data.data,
         token: data.token,
       });
+      return data;
     } catch (error) {
-      console.error("Error changing name:", error.message || error);
-      alert(`Error changing name: ${error.message}`);
+      console.error("Error changing Password:", error.message || error);
+      alert(`Error changing Password: ${error.message}`);
     }
   },
 }));

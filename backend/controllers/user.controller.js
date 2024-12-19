@@ -150,7 +150,7 @@ export const loginUser = async (req, res) => {
       message: "Login successful",
       token, // Kirim token
       data: {
-        userId: user._id,
+        _id: user._id,
         email: user.email,
         name: user.name, // atau atribut lain yang diperlukan
       },
@@ -241,14 +241,13 @@ export const updateUserPassword = async (req, res) => {
   }
 
   // Validasi input password
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])?.{8,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   if (!password || !passwordRegex.test(password)) {
     return res.status(400).json({
       success: false,
       message:
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and an optional special character!",
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number!",
     });
   }
 

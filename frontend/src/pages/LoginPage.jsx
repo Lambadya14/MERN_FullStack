@@ -20,8 +20,7 @@ const Login = () => {
     const { email, password } = loginUser;
     const result = await login(email, password); // Menggunakan fungsi login dari store
     // Reset form setelah login
-    console.log(result);
-    if (result.success) {
+    if (result) {
       // Jika login berhasil, reset form dan navigasi ke halaman utama
       setLoginUser({ email: "", password: "" });
       navigate("/");
