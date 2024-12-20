@@ -7,6 +7,7 @@ import crypto from "crypto";
 import Otp from "../models/otp.model.js";
 import resetOTP from "../models/resetPassword.model.js";
 
+
 export const getUser = async (req, res) => {
   try {
     const users = await User.find({});
@@ -154,6 +155,8 @@ export const loginUser = async (req, res) => {
         _id: user._id,
         email: user.email,
         name: user.name, // atau atribut lain yang diperlukan
+        image: user.image,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -560,5 +563,68 @@ const sendLinkEmail = async (email, token) => {
     await transporter.sendMail(mailOptions);
   } catch (error) {
     throw new Error("Failed to send OTP email");
+  }
+};
+
+export const updateUserImage = async (req, res) => {
+  const { id } = req.params;
+  const user = req.body;
+
+  // Ambil token dari header (Jika sudah menggunakan middleware, ini bisa dihapus)
+  const token = req.headers["authorization"]?.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No token provided" });
+  }
+
+  // Validasi apakah id pengguna valid
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid User Id!" });
+  }
+
+  try {
+    // Cari dan update data pengguna
+    const updateUser = await User.findByIdAndUpdate(
+      id,
+      { image: user.image },
+      { new: true } // Mengembalikan data yang telah diperbarui
+    );
+
+    // Jika pengguna tidak ditemukan setelah update
+    if (!updateUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updateUser,
+      message: "Update successful",
+    });
+  } catch (error) {
+    console.error("Error in updateUser:", error.message); // Perbaiki log kesalahan
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+export const deleteUserImage = async (req, res) => {
+  const { public_id } = req.body;
+
+  if (!public_id) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Public ID is required" });
+  }
+
+  try {
+    const result = await cloudinary.uploader.destroy(public_id);
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error("Error deleting image:", error);
+    res.status(500).json({ success: false, error });
   }
 };

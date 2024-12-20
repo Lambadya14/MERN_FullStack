@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import FotoProfil from "../assets/ProfileDefault.svg";
 import { useAuthStore } from "../store/user";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
+  const [image, setImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const user = useAuthStore((state) => state.user); // Ambil user
   const fetchUserProfile = useAuthStore((state) => state.fetchUserProfile); // Ambil fungsi fetch
   const changeName = useAuthStore((state) => state.changeName); // Ambil fungsi changeName
+  const changeImage = useAuthStore((state) => state.changeImage); // Ambil fungsi changeImage
+  const defaultImage = useAuthStore((state) => state.defaultImage); // Ambil fungsi changeImage
   const isLoading = useAuthStore((state) => state.isLoading);
   const setIsLoading = useAuthStore((state) => state.setIsLoading);
   const requestOTP = useAuthStore((state) => state.requestOTP);
-
-  console.log(user);
 
   const navigate = useNavigate();
 
@@ -70,11 +72,60 @@ const ProfilePage = () => {
     return <p>No user profile found.</p>;
   }
 
+  ////////////////////////////////////////////////////////////////
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!image) {
+      alert("Please select an image first!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("upload_preset", "profile_picture"); // Ganti dengan upload preset Anda
+    formData.append("cloud_name", "dyxdhodds"); // Ganti dengan cloud name Anda
+
+    try {
+      setUploading(true);
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dyxdhodds/image/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      console.log(data);
+      if (data.secure_url) {
+        alert("Image uploaded successfully!");
+      }
+      await changeImage(user._id, data.secure_url, user.email);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+  const handleDeletePicture = async () => {
+    await defaultImage(user._id, user.email);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
   return (
     <div className="container mx-auto flex flex-col md:flex-row flex-wrap justify-center items-center pt-[100px]">
       <div>
         <img
-          src={FotoProfil}
+          src={user.image}
           alt="image"
           className="w-[350px] h-[350px] object-cover rounded-[500px]"
         />
@@ -193,6 +244,27 @@ const ProfilePage = () => {
           )}
         </button>
       </form>
+      <div className="image-uploader">
+        <h2>Upload Image to Cloudinary</h2>
+        <input type="file" accept="image/*" onChange={handleImageChange} />
+        <button
+          onClick={handleUpload}
+          disabled={uploading}
+          className={`bg-blue-500 hover:bg-blue-600 focus:bg-blue-700 active:bg-blue-800 text-white font-semibold px-6 py-3 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 ease-in-out mt-4 w-full max-w-sm ${
+            isLoading ? "cursor-not-allowed" : ""
+          }`}
+        >
+          {uploading ? "Uploading..." : "Upload"}
+        </button>
+        <button
+          onClick={handleDeletePicture}
+          className={`bg-blue-500 hover:bg-blue-600 focus:bg-blue-700 active:bg-blue-800 text-white font-semibold px-6 py-3 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 ease-in-out mt-4 w-full max-w-sm ${
+            isLoading ? "cursor-not-allowed" : ""
+          }`}
+        >
+          Delete Profile Picutre
+        </button>
+      </div>
     </div>
   );
 };

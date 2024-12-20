@@ -50,7 +50,7 @@ export const useAuthStore = create((set) => ({
 
       // Tambahkan data user ke state
       set((state) => ({
-        user: [...state.user, data.data],
+        user: [...(state.user || []), data.data], // Pastikan state.user iterable
       }));
 
       return {
@@ -345,6 +345,82 @@ export const useAuthStore = create((set) => ({
       return false;
     } finally {
       set({ isLoading: false });
+    }
+  },
+  changeImage: async (userId, image, email) => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`/api/users/edit/image/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image, email }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error updating image:", errorDetails);
+        throw new Error(`Failed to update image. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user", JSON.stringify(data.data));
+      localStorage.setItem("token", data.token);
+
+      // Update state with the new user data and token
+      set({
+        isAuthenticated: true,
+        user: data.data,
+        token: data.token,
+      });
+    } catch (error) {
+      console.error("Error changing image:", error.message || error);
+      alert(`Error changing image: ${error.message}`);
+    }
+  },
+  defaultImage: async (userId, email) => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`/api/users/edit/image/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          image:
+            "https://res.cloudinary.com/dyxdhodds/image/upload/v1734691150/d4el1zq5vrpjjsvau63o.svg",
+          email,
+        }),
+      });
+
+      if (!response.ok) {
+        // Fetch the error details for debugging purposes
+        const errorDetails = await response.text();
+        console.error("Error updating image:", errorDetails);
+        throw new Error(`Failed to update image. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user", JSON.stringify(data.data));
+      localStorage.setItem("token", data.token);
+
+      // Update state with the new user data and token
+      set({
+        isAuthenticated: true,
+        user: data.data,
+        token: data.token,
+      });
+    } catch (error) {
+      console.error("Error changing image:", error.message || error);
+      alert(`Error changing image: ${error.message}`);
     }
   },
 }));

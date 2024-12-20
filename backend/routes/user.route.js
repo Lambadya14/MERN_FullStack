@@ -7,6 +7,7 @@ import {
   loginUser,
   requestOTP,
   requestResetOTP,
+  updateUserImage,
   updateUsername,
   updateUserPassword,
   verifyOTP,
@@ -24,6 +25,7 @@ router.post("/register", createUser);
 router.post("/login", loginUser);
 router.put("/edit/username/:id", updateUsername);
 router.put("/edit/password/:id", updateUserPassword);
+router.put("/edit/image/:id", updateUserImage);
 // router.post("/request-otp/:id", timeLimitation, requestOTP);
 // router.post("/verify-otp/:id", timeLimitation, verifyOTP);
 router.post("/request-otp/:id", requestOTP);
