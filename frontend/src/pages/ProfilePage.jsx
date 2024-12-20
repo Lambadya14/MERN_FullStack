@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import FotoProfil from "../assets/Me.jpg";
+import FotoProfil from "../assets/ProfileDefault.svg";
 import { useAuthStore } from "../store/user";
 import { useNavigate } from "react-router-dom";
 
@@ -60,7 +60,6 @@ const ProfilePage = () => {
     setIsLoading(true);
 
     const result = await requestOTP(user._id, user.email);
-    console.log(result);
     if (result) {
       navigate("/otp");
     }

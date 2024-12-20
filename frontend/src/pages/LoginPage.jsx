@@ -15,7 +15,6 @@ const Login = () => {
   const login = useAuthStore((state) => state.login);
   const handleLoginUser = async (e) => {
     e.preventDefault();
-    console.log("Login User:", loginUser);
     // Panggil fungsi login dengan email dan password
     const { email, password } = loginUser;
     const result = await login(email, password); // Menggunakan fungsi login dari store

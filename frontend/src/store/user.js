@@ -86,14 +86,14 @@ export const useAuthStore = create((set) => ({
       const data = await response.json();
 
       // Validate data before saving to localStorage
-      if (data && data.token && data.user) {
+      if (data && data.token && data.data) {
         localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(data.data));
         localStorage.setItem("token", data.token);
 
         set({
           isAuthenticated: true,
-          user: data.user,
+          user: data.data,
           token: data.token,
         });
       } else {
